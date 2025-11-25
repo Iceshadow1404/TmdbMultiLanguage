@@ -1,4 +1,8 @@
-## WIP
+# TmdbMultiLanguage 
+
+This Jellyfin plugin fetches movie and TV show images from TMDB with configurable multi-language support. It allows you to prioritize images in specific languages for your media library.
+
+# WIP, please feel free to report any bugs.
 
 # Known Bugs: 
 - The Settings page isn’t loading the existing configuration in the web UI
