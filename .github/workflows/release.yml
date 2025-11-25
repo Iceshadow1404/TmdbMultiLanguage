@@ -72,5 +72,5 @@ jobs:
           draft: false
           prerelease: false
           files: ${{ steps.prepare.outputs.ZIP_NAME }}
-          token: ${{ secrets.PAT_TOKEN }
+          token: ${{ secrets.PAT_TOKEN }}
           make_latest: true
