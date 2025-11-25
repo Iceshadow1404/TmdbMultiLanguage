@@ -1,15 +1,11 @@
-[
-  {
-    "name": "TMDB Multi-Language Images",
-    "guid": "a1b2c3d4-5678-90ab-cdef-1234567890ab",
-    "versions": [
-      {
-        "version": "1.0.0.0",
-        "changelog": "Initial Release. Added multi-language image support.",
-        "targetAbi": "10.9.0.0",
-        "sourceUrl": "https://github.com/Iceshadow1404/TmdbMultiLanguage/releases/download/v1.0.0.0/Jellyfin.Plugin.TmdbMultiLanguage_v1.0.0.0.zip",
-        "checksum": ""
-      }
-    ]
-  }
-]
+{
+  "name": "TMDB Multi-Language Images",
+  "guid": "a1b2c3d4-5678-90ab-cdef-1234567890ab",
+  "versions": [
+    {
+      "version": "1.0.0.0",
+      "changelog": "Initial Release. Added multi-language image support.",
+      "targetAbi": "10.9.0.0",
+      "sourceUrl": "https://github.com/Iceshadow1404/TmdbMultiLanguage/releases/download/v1.0.0.0-28799f5/Jellyfin.Plugin.TmdbMultiLanguage_v1.0.0.0_28799f5.zip",
+      "checksum": ""
+    }
