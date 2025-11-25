@@ -1,8 +1,12 @@
 name: Release Plugin
+
 on:
   push:
     branches:
       - master
+    paths:
+      - "meta.json"
+      - "manifest.json"
 
 jobs:
   build_and_release:
@@ -10,7 +14,7 @@ jobs:
     permissions:
       contents: write
       packages: write
-      
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -31,9 +35,8 @@ jobs:
       - name: Get version from meta.json
         id: get_version
         run: |
-          VERSION=$(cat meta.json | grep -Po '"version"\s*:\s*"\K[^"]+')
+          VERSION=$(grep -Po '"version"\s*:\s*"\K[^"]+' meta.json)
           echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
-          echo "Version: $VERSION"
 
       - name: Get commit hash
         id: get_hash
