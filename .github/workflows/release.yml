@@ -18,6 +18,8 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
+          githubToken: ${{ secrets.GITHUB_TOKEN }}
+          repository: ${{ github.repository }}
 
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
@@ -54,3 +56,5 @@ jobs:
           draft: false
           prerelease: false
           files: ${{ steps.prepare.outputs.ZIP_NAME }}
+          githubToken: ${{ secrets.GITHUB_TOKEN }}
+          repository: ${{ github.repository }}
