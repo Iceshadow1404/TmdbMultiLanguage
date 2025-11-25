@@ -1,5 +1,6 @@
 ## WIP
 
+# Known Bugs: The Settings page isn’t loading the existing configuration in the web UI
 ---
 
 ## 🛠️ Build Instructions
