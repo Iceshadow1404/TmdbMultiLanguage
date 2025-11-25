@@ -1,0 +1,18 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <RootNamespace>Jellyfin.Plugin.TmdbMultiLanguage</RootNamespace>
+    <AssemblyName>Jellyfin.Plugin.TmdbMultiLanguage</AssemblyName>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Jellyfin.Controller" Version="10.9.0" />
+    <PackageReference Include="Jellyfin.Model" Version="10.9.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+  <EmbeddedResource Include="Configuration\configPage.html" />
+  </ItemGroup>
+</Project>

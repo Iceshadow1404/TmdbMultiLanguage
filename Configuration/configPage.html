@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>TMDB Multi-Language Config</title>
+</head>
+<body>
+    <div data-role="page" class="page type-interior pluginConfigurationPage" data-require="emby-input,emby-button" data-controller="__plugin/TmdbMultiLanguageConfigurationPage">
+        <div data-role="content">
+            <div class="content-primary">
+                <form id="tmdbMultiLanguageConfigForm">
+                    
+                    <div class="verticalSection">
+                        <div class="sectionTitleContainer">
+                            <h2 class="sectionTitle">TMDB Multi-Language Image Settings</h2>
+                            <p class="sectionDescription">
+                                Configure your API Key and preferred language order for image fetching.
+                            </p>
+                        </div>
+                    </div>
+
+                    <div class="inputContainer">
+                        <label class="inputLabel inputLabelUnfocused" for="txtTmdbApiKey">TMDB API Key</label>
+                        <input type="text" id="txtTmdbApiKey" name="txtTmdbApiKey" is="emby-input" required />
+                        <div class="fieldDescription">Your personal API key from TheMovieDB. Required for metadata and image fetching.</div>
+                    </div>
+
+                    <div class="inputContainer">
+                        <label class="inputLabel inputLabelUnfocused" for="txtPreferredLanguages">Preferred Languages (Comma Separated)</label>
+                        <input type="text" id="txtPreferredLanguages" name="txtPreferredLanguages" is="emby-input" defaultValue="en,de,null" />
+                        <div class="fieldDescription">Example: **en,de,null**. The API will search for images in this order. Using **null** instructs the API to search for images without language tags.</div>
+                    </div>
+
+                    <div>
+                        <button is="emby-button" type="submit" class="raised button-submit block formDialogFooterItem">
+                            <span>Save</span>
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <script type="text/javascript">
+            // This object handles the logic for the configuration page.
+            var TmdbMultiLanguageConfigurationPage = {
+                // Must match the GUID from Plugin.cs
+                pluginId: "a1b2c3d4-5678-90ab-cdef-1234567890ab",
+
+                /**
+                 * Loads the current configuration from the server and populates the form fields.
+                 * This function includes the fix for casing (PascalCase vs camelCase) when loading.
+                 */
+                updateConfig: function (page) {
+                    var me = this;
+                    
+                    ApiClient.getPluginConfiguration(me.pluginId).then(function (config) {
+                        console.log("TMDB Config geladen:", config); 
+                        var apiKey = config.TmdbApiKey || config.tmdbApiKey || "";
+                        var languages = config.PreferredLanguages || config.preferredLanguages || "en,de,null";
+
+                        $('#txtTmdbApiKey', page).val(apiKey).trigger('change');
+                        
+                        $('#txtPreferredLanguages', page).val(languages).trigger('change');
+                    });
+                },
+
+                /**
+                 * Reads form fields and sends the updated configuration to the server.
+                 */
+                onSubmit: function (page) {
+                    var me = this;
+                    
+                    // Read values from form inputs
+                    var tmdbApiKey = page.querySelector('#txtTmdbApiKey').value;
+                    var preferredLanguages = page.querySelector('#txtPreferredLanguages').value;
+
+                    // The config object must match the C# properties (PascalCase) for saving
+                    var config = {
+                        TmdbApiKey: tmdbApiKey,
+                        PreferredLanguages: preferredLanguages
+                    };
+
+                    // Load current config, merge changes, and update
+                    ApiClient.getPluginConfiguration(me.pluginId).then(function (currentConfig) {
+                        var newConfig = Object.assign(currentConfig, config);
+                        
+                        ApiClient.updatePluginConfiguration(me.pluginId, newConfig).then(function (result) {
+                            // Display success message
+                            Dashboard.processPluginConfigurationUpdateResult(result);
+                        }, function(error) {
+                            // Display error message
+                            console.error("Error saving configuration:", error);
+                            Dashboard.alert({
+                                message: "Error saving configuration: " + error.Message
+                            });
+                        });
+                    });
+                }
+            };
+
+            // Event Hooks (Jellyfin UI Lifecycle)
+            
+            // Fires when the page is ready to be shown
+            $('.pluginConfigurationPage').on('pageshow', function () {
+                var page = this;
+                TmdbMultiLanguageConfigurationPage.updateConfig(page);
+            });
+
+            // Fires when the form is submitted
+            $('.pluginConfigurationPage').on('submit', 'form', function (e) {
+                e.preventDefault();
+                var page = $(this).parents('.page')[0];
+                TmdbMultiLanguageConfigurationPage.onSubmit(page);
+                return false;
+            });
+        </script>
+    </div>
+</body>
+</html>
