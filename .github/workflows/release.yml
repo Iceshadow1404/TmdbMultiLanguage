@@ -1,5 +1,4 @@
 name: Release Plugin
-
 on:
   push:
     tags:
@@ -8,18 +7,15 @@ on:
 jobs:
   build_and_release:
     runs-on: ubuntu-latest
-
     permissions:
       contents: write
       packages: write
-    
+      
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
-          githubToken: ${{ secrets.GITHUB_TOKEN }}
-          repository: ${{ github.repository }}
 
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
@@ -42,19 +38,19 @@ jobs:
           
           cp $OUTPUT_PATH/$PLUGIN_NAME.dll release_package/
           cp meta.json release_package/
-
+          
           ZIP_NAME="${PLUGIN_NAME}_${{ github.ref_name }}.zip"
           echo "ZIP_NAME=$ZIP_NAME" >> $GITHUB_OUTPUT
           
-          zip -j $ZIP_NAME release_package/*
+          cd release_package
+          zip -r ../$ZIP_NAME *
+          cd ..
         
       - name: Create Release
         uses: softprops/action-gh-release@v1
         with:
-          tag_name: ${{ github.ref }}
-          name: Plugin Release ${{ github.ref }}
+          name: Release ${{ github.ref_name }}
           draft: false
           prerelease: false
           files: ${{ steps.prepare.outputs.ZIP_NAME }}
-          githubToken: ${{ secrets.GITHUB_TOKEN }}
-          repository: ${{ github.repository }}
+          token: ${{ secrets.GITHUB_TOKEN }}
