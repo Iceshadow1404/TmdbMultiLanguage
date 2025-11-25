@@ -1,8 +1,8 @@
 name: Release Plugin
 on:
   push:
-    tags:
-      - 'v*'
+    branches:
+      - master
 
 jobs:
   build_and_release:
@@ -28,6 +28,19 @@ jobs:
       - name: Build Plugin
         run: dotnet build --configuration Release --no-restore
 
+      - name: Get version from meta.json
+        id: get_version
+        run: |
+          VERSION=$(cat meta.json | grep -Po '"version"\s*:\s*"\K[^"]+')
+          echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
+          echo "Version: $VERSION"
+
+      - name: Get commit hash
+        id: get_hash
+        run: |
+          SHORT_SHA=$(git rev-parse --short HEAD)
+          echo "SHORT_SHA=$SHORT_SHA" >> $GITHUB_OUTPUT
+
       - name: Prepare Plugin Files
         id: prepare
         run: |
@@ -39,7 +52,7 @@ jobs:
           cp $OUTPUT_PATH/$PLUGIN_NAME.dll release_package/
           cp meta.json release_package/
           
-          ZIP_NAME="${PLUGIN_NAME}_${{ github.ref_name }}.zip"
+          ZIP_NAME="${PLUGIN_NAME}_v${{ steps.get_version.outputs.VERSION }}_${{ steps.get_hash.outputs.SHORT_SHA }}.zip"
           echo "ZIP_NAME=$ZIP_NAME" >> $GITHUB_OUTPUT
           
           cd release_package
@@ -47,10 +60,17 @@ jobs:
           cd ..
         
       - name: Create Release
-        uses: softprops/action-gh-release@v1
+        uses: softprops/action-gh-release@v2
         with:
-          name: Release ${{ github.ref_name }}
+          tag_name: v${{ steps.get_version.outputs.VERSION }}-${{ steps.get_hash.outputs.SHORT_SHA }}
+          name: Release v${{ steps.get_version.outputs.VERSION }} (${{ steps.get_hash.outputs.SHORT_SHA }})
+          body: |
+            Automated release from commit ${{ github.sha }}
+            
+            **Changes in this release:**
+            ${{ github.event.head_commit.message }}
           draft: false
           prerelease: false
           files: ${{ steps.prepare.outputs.ZIP_NAME }}
           token: ${{ secrets.GITHUB_TOKEN }}
+          make_latest: true
