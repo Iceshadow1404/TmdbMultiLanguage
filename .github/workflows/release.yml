@@ -1,0 +1,52 @@
+name: Release Plugin
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  build_and_release:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.x'
+
+      - name: Restore dependencies
+        run: dotnet restore
+        
+      - name: Build Plugin
+        run: dotnet build --configuration Release --no-restore
+
+      - name: Prepare Plugin Files
+        id: prepare
+        run: |
+          OUTPUT_PATH="bin/Release/net8.0"
+          PLUGIN_NAME="Jellyfin.Plugin.TmdbMultiLanguage"
+          
+          mkdir -p release_package
+          
+          cp $OUTPUT_PATH/$PLUGIN_NAME.dll release_package/
+          cp $PLUGIN_NAME/meta.json release_package/
+
+          ZIP_NAME="${PLUGIN_NAME}_${{ github.ref_name }}.zip"
+          echo "ZIP_NAME=$ZIP_NAME" >> $GITHUB_OUTPUT
+          
+          zip -j $ZIP_NAME release_package/*
+        
+      - name: Create Release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: ${{ github.ref }}
+          name: Plugin Release ${{ github.ref }}
+          draft: false
+          prerelease: false
+          files: ${{ steps.prepare.outputs.ZIP_NAME }}
