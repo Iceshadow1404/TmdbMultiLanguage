@@ -1,7 +1,10 @@
 ## WIP
 
-# Known Bugs: The Settings page isn’t loading the existing configuration in the web UI
+# Known Bugs: 
+- The Settings page isn’t loading the existing configuration in the web UI
 ---
+
+Plugin url `https://raw.githubusercontent.com/Iceshadow1404/TmdbMultiLanguage/518f744a35036efb702418e1e9bf6b892de554fa/manifest.json`
 
 ## 🛠️ Build Instructions
 
