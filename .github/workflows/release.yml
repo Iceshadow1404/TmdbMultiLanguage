@@ -89,8 +89,6 @@ jobs:
             ${{ github.event.head_commit.message }}
             
             **Checksum:** ${{ steps.checksum.outputs.CHECKSUM }}
-            
-            Update the checksum in manifest.json with the value above.
           draft: false
           prerelease: false
           files: |
