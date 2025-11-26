@@ -1,13 +1,13 @@
 {
-  "guid": "a1b2c3d4-5678-90ab-cdef-1234567890ab",
+  "guid": "96afa51e-678e-42ac-b9f6-f3679173a23f",
   "name": "TMDB Multi-Language Images",
   "description": "Load images from TMDB with configurable language preferences",
   "overview": "Allows you to specify preferred languages for TMDB images",
   "owner": "YourName",
   "category": "Metadata",
-  "version": "1.0.1.0",
+  "version": "1.0.2.0",
   "targetAbi": "10.9.0.0",
   "framework": "net8.0",
-  "changelog": "Initial release",
+  "changelog": "Improved config page compatibility with Jellyfin 10.10.7 and updated plugin GUID.",
   "imageUrl": ""
 }

@@ -36,7 +36,7 @@ namespace Jellyfin.Plugin.TmdbMultiLanguage
     public class Plugin : BasePlugin<PluginConfiguration>, IHasWebPages
     {
         public override string Name => "TMDB Multi-Language Images";
-        public override Guid Id => Guid.Parse("a1b2c3d4-5678-90ab-cdef-1234567890ab");
+        public override Guid Id => Guid.Parse("96afa51e-678e-42ac-b9f6-f3679173a23f");
         public override string Description => "Load images from TMDB with configurable language preferences";
         
         public static Plugin? Instance { get; private set; }
