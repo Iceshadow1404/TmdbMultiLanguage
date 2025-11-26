@@ -55,25 +55,47 @@ jobs:
           cp $OUTPUT_PATH/$PLUGIN_NAME.dll release_package/
           cp meta.json release_package/
           
-          ZIP_NAME="${PLUGIN_NAME}_v${{ steps.get_version.outputs.VERSION }}_${{ steps.get_hash.outputs.SHORT_SHA }}.zip"
+          # Create ZIP with version only (for manifest.json)
+          ZIP_NAME="${PLUGIN_NAME}_v${{ steps.get_version.outputs.VERSION }}.zip"
           echo "ZIP_NAME=$ZIP_NAME" >> $GITHUB_OUTPUT
           
           cd release_package
           zip -r ../$ZIP_NAME *
           cd ..
+          
+          # Also create ZIP with SHA for reference
+          ZIP_NAME_WITH_SHA="${PLUGIN_NAME}_v${{ steps.get_version.outputs.VERSION }}_${{ steps.get_hash.outputs.SHORT_SHA }}.zip"
+          echo "ZIP_NAME_WITH_SHA=$ZIP_NAME_WITH_SHA" >> $GITHUB_OUTPUT
+          
+          cd release_package
+          zip -r ../$ZIP_NAME_WITH_SHA *
+          cd ..
+      
+      - name: Calculate Checksum
+        id: checksum
+        run: |
+          CHECKSUM=$(md5sum ${{ steps.prepare.outputs.ZIP_NAME }} | cut -d' ' -f1 | tr '[:lower:]' '[:upper:]')
+          echo "CHECKSUM=$CHECKSUM" >> $GITHUB_OUTPUT
+          echo "Checksum for ${{ steps.prepare.outputs.ZIP_NAME }}: $CHECKSUM"
         
       - name: Create Release
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: v${{ steps.get_version.outputs.VERSION }}-${{ steps.get_hash.outputs.SHORT_SHA }}
-          name: Release v${{ steps.get_version.outputs.VERSION }} (${{ steps.get_hash.outputs.SHORT_SHA }})
+          tag_name: v${{ steps.get_version.outputs.VERSION }}
+          name: Release v${{ steps.get_version.outputs.VERSION }}
           body: |
             Automated release from commit ${{ github.sha }}
             
             **Changes in this release:**
             ${{ github.event.head_commit.message }}
+            
+            **Checksum:** ${{ steps.checksum.outputs.CHECKSUM }}
+            
+            Update the checksum in manifest.json with the value above.
           draft: false
           prerelease: false
-          files: ${{ steps.prepare.outputs.ZIP_NAME }}
+          files: |
+            ${{ steps.prepare.outputs.ZIP_NAME }}
+            ${{ steps.prepare.outputs.ZIP_NAME_WITH_SHA }}
           token: ${{ secrets.PAT_TOKEN }}
           make_latest: true

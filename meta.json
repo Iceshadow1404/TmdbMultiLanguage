@@ -5,7 +5,7 @@
   "overview": "Allows you to specify preferred languages for TMDB images",
   "owner": "YourName",
   "category": "Metadata",
-  "version": "1.0.0.0",
+  "version": "1.0.1.0",
   "targetAbi": "10.9.0.0",
   "framework": "net8.0",
   "changelog": "Initial release",
