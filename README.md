@@ -4,10 +4,6 @@ This Jellyfin plugin fetches movie and TV show images from TMDB with configurabl
 
 # WIP, please feel free to report any bugs.
 
-# Known Bugs: 
-- The Settings page isn’t loading the existing configuration in the web UI
----
-
 ## 📦 Install Instructions (Jellyfin)
 
 1. Open **Jellyfin → Dashboard → Plugins → Repositories**

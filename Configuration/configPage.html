@@ -34,77 +34,134 @@
     </div>
 
     <script type="text/javascript">
-        // This object handles the logic for the configuration page.
-        var TmdbMultiLanguageConfigurationPage = {
-            // Must match the GUID from Plugin.cs
-            pluginId: "a1b2c3d4-5678-90ab-cdef-1234567890ab",
+        (function() {
+            'use strict';
+            
+            // This object handles the logic for the configuration page.
+            var TmdbMultiLanguageConfigurationPage = {
+                // Must match the GUID from Plugin.cs
+                pluginId: "a1b2c3d4-5678-90ab-cdef-1234567890ab",
 
-            /**
-             * Loads the current configuration from the server and populates the form fields.
-             * This function includes the fix for casing (PascalCase vs camelCase) when loading.
-             */
-            updateConfig: function (page) {
-                var me = this;
-                
-                ApiClient.getPluginConfiguration(me.pluginId).then(function (config) {
-                    console.log("TMDB Config geladen:", config); 
-                    var apiKey = config.TmdbApiKey || config.tmdbApiKey || "";
-                    var languages = config.PreferredLanguages || config.preferredLanguages || "en,de,null";
-
-                    $('#txtTmdbApiKey', page).val(apiKey).trigger('change');
+                /**
+                 * Loads the current configuration from the server and populates the form fields.
+                 * This function includes the fix for casing (PascalCase vs camelCase) when loading.
+                 */
+                updateConfig: function (page) {
+                    var me = this;
                     
-                    $('#txtPreferredLanguages', page).val(languages).trigger('change');
-                });
-            },
-
-            /**
-             * Reads form fields and sends the updated configuration to the server.
-             */
-            onSubmit: function (page) {
-                var me = this;
-                
-                // Read values from form inputs
-                var tmdbApiKey = page.querySelector('#txtTmdbApiKey').value;
-                var preferredLanguages = page.querySelector('#txtPreferredLanguages').value;
-
-                // The config object must match the C# properties (PascalCase) for saving
-                var config = {
-                    TmdbApiKey: tmdbApiKey,
-                    PreferredLanguages: preferredLanguages
-                };
-
-                // Load current config, merge changes, and update
-                ApiClient.getPluginConfiguration(me.pluginId).then(function (currentConfig) {
-                    var newConfig = Object.assign(currentConfig, config);
+                    if (!page) {
+                        page = document.querySelector('.pluginConfigurationPage');
+                    }
                     
-                    ApiClient.updatePluginConfiguration(me.pluginId, newConfig).then(function (result) {
-                        // Display success message
-                        Dashboard.processPluginConfigurationUpdateResult(result);
-                    }, function(error) {
-                        // Display error message
-                        console.error("Error saving configuration:", error);
-                        Dashboard.alert({
-                            message: "Error saving configuration: " + error.Message
+                    if (!page) {
+                        return;
+                    }
+                    
+                    ApiClient.getPluginConfiguration(me.pluginId).then(function (config) {
+                        console.log("TMDB Config geladen:", config); 
+                        var apiKey = config.TmdbApiKey || config.tmdbApiKey || "";
+                        var languages = config.PreferredLanguages || config.preferredLanguages || "en,de,null";
+
+                        var apiKeyInput = page.querySelector('#txtTmdbApiKey');
+                        var languagesInput = page.querySelector('#txtPreferredLanguages');
+                        
+                        if (apiKeyInput) {
+                            apiKeyInput.value = apiKey;
+                            if (apiKeyInput.dispatchEvent) {
+                                apiKeyInput.dispatchEvent(new Event('change', { bubbles: true }));
+                            }
+                        }
+                        
+                        if (languagesInput) {
+                            languagesInput.value = languages;
+                            if (languagesInput.dispatchEvent) {
+                                languagesInput.dispatchEvent(new Event('change', { bubbles: true }));
+                            }
+                        }
+                    }).catch(function(error) {
+                        console.error("Error loading configuration:", error);
+                    });
+                },
+
+                /**
+                 * Reads form fields and sends the updated configuration to the server.
+                 */
+                onSubmit: function (page) {
+                    var me = this;
+                    
+                    if (!page) {
+                        page = document.querySelector('.pluginConfigurationPage');
+                    }
+                    
+                    // Read values from form inputs
+                    var tmdbApiKey = page.querySelector('#txtTmdbApiKey').value;
+                    var preferredLanguages = page.querySelector('#txtPreferredLanguages').value;
+
+                    // The config object must match the C# properties (PascalCase) for saving
+                    var config = {
+                        TmdbApiKey: tmdbApiKey,
+                        PreferredLanguages: preferredLanguages
+                    };
+
+                    // Load current config, merge changes, and update
+                    ApiClient.getPluginConfiguration(me.pluginId).then(function (currentConfig) {
+                        var newConfig = Object.assign(currentConfig || {}, config);
+                        
+                        ApiClient.updatePluginConfiguration(me.pluginId, newConfig).then(function (result) {
+                            // Display success message
+                            Dashboard.processPluginConfigurationUpdateResult(result);
+                        }, function(error) {
+                            // Display error message
+                            console.error("Error saving configuration:", error);
+                            Dashboard.alert({
+                                message: "Error saving configuration: " + (error.Message || error)
+                            });
                         });
                     });
-                });
+                }
+            };
+
+            // Initialize when DOM is ready
+            function init() {
+                var page = document.querySelector('.pluginConfigurationPage');
+                if (page && typeof ApiClient !== 'undefined') {
+                    TmdbMultiLanguageConfigurationPage.updateConfig(page);
+                }
             }
-        };
 
-        // Event Hooks (Jellyfin UI Lifecycle)
-        
-        // Fires when the page is ready to be shown
-        $('.pluginConfigurationPage').on('pageshow', function () {
-            var page = this;
-            TmdbMultiLanguageConfigurationPage.updateConfig(page);
-        });
+            // Multiple initialization strategies for compatibility
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', init);
+            } else {
+                // DOM already loaded, try immediately
+                setTimeout(init, 100);
+            }
 
-        // Fires when the form is submitted
-        $('.pluginConfigurationPage').on('submit', 'form', function (e) {
-            e.preventDefault();
-            var page = $(this).parents('.page')[0];
-            TmdbMultiLanguageConfigurationPage.onSubmit(page);
-            return false;
-        });
+            // Event Hooks (Jellyfin UI Lifecycle)
+            document.addEventListener('DOMContentLoaded', function() {
+                // Fires when the page is initialized
+                $(document).on('pageinit', '.pluginConfigurationPage', function () {
+                    var page = this;
+                    TmdbMultiLanguageConfigurationPage.updateConfig(page);
+                });
+
+                // Fires when the page is ready to be shown
+                $(document).on('pageshow', '.pluginConfigurationPage', function () {
+                    var page = this;
+                    TmdbMultiLanguageConfigurationPage.updateConfig(page);
+                });
+
+                // Fires when the form is submitted
+                $(document).on('submit', '.pluginConfigurationPage form', function (e) {
+                    e.preventDefault();
+                    var page = $(this).closest('.page')[0] || this.closest('.pluginConfigurationPage');
+                    TmdbMultiLanguageConfigurationPage.onSubmit(page);
+                    return false;
+                });
+            });
+
+            // Expose to global scope for Jellyfin's data-controller
+            window.TmdbMultiLanguageConfigurationPage = TmdbMultiLanguageConfigurationPage;
+        })();
     </script>
 </div>
