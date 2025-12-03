@@ -86,7 +86,8 @@ namespace Jellyfin.Plugin.TmdbMultiLanguage
             var config = Plugin.Instance?.Configuration;
             if (config?.EnableDebugMode == true)
             {
-                _logger.LogDebug(message, args);
+                // Use LogInformation instead of LogDebug so logs are visible in Jellyfin console
+                _logger.LogInformation(message, args);
             }
         }
 
