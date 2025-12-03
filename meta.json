@@ -5,7 +5,7 @@
   "overview": "Allows you to specify preferred languages for TMDB images",
   "owner": "YourName",
   "category": "Metadata",
-  "version": "1.0.2.0",
+  "version": "1.0.3.0",
   "targetAbi": "10.9.0.0",
   "framework": "net8.0",
   "changelog": "Improved config page compatibility with Jellyfin 10.10.7 and updated plugin GUID.",
