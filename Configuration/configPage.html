@@ -24,6 +24,14 @@
                     <div class="fieldDescription">Example: **en,de,null**. The API will search for images in this order. Using **null** instructs the API to search for images without language tags.</div>
                 </div>
 
+                <div class="inputContainer">
+                    <label class="checkboxContainerLabel">
+                        <input type="checkbox" id="chkEnableDebugMode" name="chkEnableDebugMode" is="emby-checkbox" />
+                        <span>Enable Debug Mode</span>
+                    </label>
+                    <div class="fieldDescription">When enabled, detailed debug information about TMDB API interactions will be logged to the Jellyfin console. Useful for troubleshooting.</div>
+                </div>
+
                 <div>
                     <button is="emby-button" type="submit" class="raised button-submit block formDialogFooterItem">
                         <span>Save</span>
@@ -51,9 +59,11 @@
                 ApiClient.getPluginConfiguration(pluginId).then(function (config) {
                     var apiKey = config.TmdbApiKey || config.tmdbApiKey || "";
                     var languages = config.PreferredLanguages || config.preferredLanguages || "en,de,null";
+                    var enableDebugMode = config.EnableDebugMode || config.enableDebugMode || false;
 
                     var apiKeyInput = page.querySelector('#txtTmdbApiKey');
                     var languagesInput = page.querySelector('#txtPreferredLanguages');
+                    var debugModeCheckbox = page.querySelector('#chkEnableDebugMode');
                     
                     if (apiKeyInput) {
                         apiKeyInput.value = apiKey;
@@ -61,6 +71,10 @@
                     
                     if (languagesInput) {
                         languagesInput.value = languages;
+                    }
+                    
+                    if (debugModeCheckbox) {
+                        debugModeCheckbox.checked = enableDebugMode;
                     }
                     
                     configLoaded = true;
@@ -136,12 +150,14 @@
                         // Read values from form inputs
                         var tmdbApiKey = page.querySelector('#txtTmdbApiKey').value;
                         var preferredLanguages = page.querySelector('#txtPreferredLanguages').value;
+                        var enableDebugMode = page.querySelector('#chkEnableDebugMode').checked;
 
                         // Load current config, merge changes, and update
                         ApiClient.getPluginConfiguration(pluginId).then(function (currentConfig) {
                             var config = currentConfig || {};
                             config.TmdbApiKey = tmdbApiKey;
                             config.PreferredLanguages = preferredLanguages;
+                            config.EnableDebugMode = enableDebugMode;
                             
                             ApiClient.updatePluginConfiguration(pluginId, config).then(function (result) {
                                 Dashboard.processPluginConfigurationUpdateResult(result);
