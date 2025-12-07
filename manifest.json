@@ -8,7 +8,7 @@
         "changelog": "Fixed plugin version in jellyfin",
         "targetAbi": "10.9.0.0",
         "sourceUrl": "https://github.com/Iceshadow1404/TmdbMultiLanguage/releases/download/v1.0.3.2/Jellyfin.Plugin.TmdbMultiLanguage_v1.0.3.2.zip",
-        "checksum": "76B6EE62C21DD79788D759464A948A53"
+        "checksum": "908F2334B9FCB117DE81D7C4526DA4E5"
       },
       {
         "version": "1.0.3.1",
