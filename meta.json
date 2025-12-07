@@ -3,11 +3,11 @@
   "name": "TMDB Multi-Language Images",
   "description": "Load images from TMDB with configurable language preferences",
   "overview": "Allows you to specify preferred languages for TMDB images",
-  "owner": "YourName",
+  "owner": "Iceshadow",
   "category": "Metadata",
-  "version": "1.0.3.1",
+  "version": "1.0.3.2",
   "targetAbi": "10.9.0.0",
   "framework": "net8.0",
-  "changelog": "Hotfix to see debug logs in jellyfin console.",
+  "changelog": "Fixed plugin version in jellyfin.",
   "imageUrl": ""
 }

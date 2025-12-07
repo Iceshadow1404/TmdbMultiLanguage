@@ -4,6 +4,13 @@
     "guid": "96afa51e-678e-42ac-b9f6-f3679173a23f",
     "versions": [
       {
+        "version": "1.0.3.2",
+        "changelog": "Fixed plugin version in jellyfin",
+        "targetAbi": "10.9.0.0",
+        "sourceUrl": "https://github.com/Iceshadow1404/TmdbMultiLanguage/releases/download/v1.0.3.2/Jellyfin.Plugin.TmdbMultiLanguage_v1.0.3.2.zip",
+        "checksum": "76B6EE62C21DD79788D759464A948A53"
+      },
+      {
         "version": "1.0.3.1",
         "changelog": "Hotfix to see debug logs in jellyfin console",
         "targetAbi": "10.9.0.0",
