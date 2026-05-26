@@ -24,14 +24,36 @@ namespace Jellyfin.Plugin.TmdbMultiLanguage
     public class PluginConfiguration : BasePluginConfiguration
     {
         public string TmdbApiKey { get; set; }
+
+        // Legacy global setting — kept as fallback so existing installs keep working
+        // until the user saves the new per-type fields via the config page.
         public string PreferredLanguages { get; set; }
+
+        public string PrimaryLanguages { get; set; }
+        public string BackdropLanguages { get; set; }
+        public string LogoLanguages { get; set; }
         public bool EnableDebugMode { get; set; }
 
         public PluginConfiguration()
         {
             TmdbApiKey = string.Empty;
             PreferredLanguages = "de,en,null";
+            PrimaryLanguages = string.Empty;
+            BackdropLanguages = string.Empty;
+            LogoLanguages = string.Empty;
             EnableDebugMode = false;
+        }
+
+        public string GetLanguagesFor(ImageType imageType)
+        {
+            var value = imageType switch
+            {
+                ImageType.Primary => PrimaryLanguages,
+                ImageType.Backdrop => BackdropLanguages,
+                ImageType.Logo => LogoLanguages,
+                _ => string.Empty,
+            };
+            return string.IsNullOrWhiteSpace(value) ? PreferredLanguages : value;
         }
     }
 
@@ -128,14 +150,21 @@ namespace Jellyfin.Plugin.TmdbMultiLanguage
                 return Enumerable.Empty<RemoteImageInfo>();
             }
 
-            var languageParam = config.PreferredLanguages ?? "de,en,null";
+            var primaryPriority = ParseLanguagePriority(config.GetLanguagesFor(ImageType.Primary));
+            var backdropPriority = ParseLanguagePriority(config.GetLanguagesFor(ImageType.Backdrop));
+            var logoPriority = ParseLanguagePriority(config.GetLanguagesFor(ImageType.Logo));
+
+            // Union of all per-type languages — single API call covers all three lists.
+            var languageParam = BuildLanguageQueryParam(primaryPriority, backdropPriority, logoPriority);
             var mediaType = item is Movie ? "movie" : "tv";
             var url = $"{TmdbBaseUrl}/{mediaType}/{tmdbId}/images?api_key={config.TmdbApiKey}&include_image_language={languageParam}";
-            
+
             // Log URL without API key for security
             var safeUrl = $"{TmdbBaseUrl}/{mediaType}/{tmdbId}/images?api_key=***&include_image_language={languageParam}";
-            LogDebugIfEnabled("[TMDB Multi-Language] Fetching images from TMDB API for {ItemName} (TMDB ID: {TmdbId}, Type: {MediaType}, Languages: {Languages})", 
+            LogDebugIfEnabled("[TMDB Multi-Language] Fetching images from TMDB API for {ItemName} (TMDB ID: {TmdbId}, Type: {MediaType}, Languages: {Languages})",
                 itemName, tmdbId, mediaType, languageParam);
+            LogDebugIfEnabled("[TMDB Multi-Language] Per-type priority - Primary: [{Primary}], Backdrop: [{Backdrop}], Logo: [{Logo}]",
+                FormatPriority(primaryPriority), FormatPriority(backdropPriority), FormatPriority(logoPriority));
             LogDebugIfEnabled("[TMDB Multi-Language] API URL: {Url}", safeUrl);
 
             try
@@ -172,89 +201,15 @@ namespace Jellyfin.Plugin.TmdbMultiLanguage
                 var imageData = JsonSerializer.Deserialize<TmdbImageResponse>(response, jsonOptions);
                 var images = new List<RemoteImageInfo>();
 
-                // Posters (Primary)
-                if (imageData?.Posters != null)
-                {
-                    var posterCount = imageData.Posters.Count;
-                    LogDebugIfEnabled("[TMDB Multi-Language] Found {Count} poster(s) for {ItemName} (TMDB ID: {TmdbId})", 
-                        posterCount, itemName, tmdbId);
-                    
-                    images.AddRange(imageData.Posters.Select(poster => new RemoteImageInfo
-                    {
-                        Url = TmdbImageBaseUrl + poster.FilePath,
-                        Type = ImageType.Primary,
-                        ProviderName = Name,
-                        Language = poster.Iso639_1,
-                        Width = poster.Width,
-                        Height = poster.Height,
-                        CommunityRating = poster.VoteAverage
-                    }));
-                    
-                    var posterLanguages = string.Join(", ", imageData.Posters.Select(p => p.Iso639_1 ?? "null").Distinct());
-                    LogDebugIfEnabled("[TMDB Multi-Language] Poster languages for {ItemName}: {Languages}", itemName, posterLanguages);
-                }
-                else
-                {
-                    LogDebugIfEnabled("[TMDB Multi-Language] No posters found for {ItemName} (TMDB ID: {TmdbId})", itemName, tmdbId);
-                }
+                var filteredPosters = AddFilteredImages(images, imageData?.Posters, ImageType.Primary, primaryPriority, "poster", itemName, tmdbId);
+                var filteredBackdrops = AddFilteredImages(images, imageData?.Backdrops, ImageType.Backdrop, backdropPriority, "backdrop", itemName, tmdbId);
+                var filteredLogos = AddFilteredImages(images, imageData?.Logos, ImageType.Logo, logoPriority, "logo", itemName, tmdbId);
 
-                // Backdrops
-                if (imageData?.Backdrops != null)
-                {
-                    var backdropCount = imageData.Backdrops.Count;
-                    LogDebugIfEnabled("[TMDB Multi-Language] Found {Count} backdrop(s) for {ItemName} (TMDB ID: {TmdbId})", 
-                        backdropCount, itemName, tmdbId);
-                    
-                    images.AddRange(imageData.Backdrops.Select(backdrop => new RemoteImageInfo
-                    {
-                        Url = TmdbImageBaseUrl + backdrop.FilePath,
-                        Type = ImageType.Backdrop,
-                        ProviderName = Name,
-                        Language = backdrop.Iso639_1,
-                        Width = backdrop.Width,
-                        Height = backdrop.Height,
-                        CommunityRating = backdrop.VoteAverage
-                    }));
-                    
-                    var backdropLanguages = string.Join(", ", imageData.Backdrops.Select(b => b.Iso639_1 ?? "null").Distinct());
-                    LogDebugIfEnabled("[TMDB Multi-Language] Backdrop languages for {ItemName}: {Languages}", itemName, backdropLanguages);
-                }
-                else
-                {
-                    LogDebugIfEnabled("[TMDB Multi-Language] No backdrops found for {ItemName} (TMDB ID: {TmdbId})", itemName, tmdbId);
-                }
-
-                // Logos
-                if (imageData?.Logos != null)
-                {
-                    var logoCount = imageData.Logos.Count;
-                    LogDebugIfEnabled("[TMDB Multi-Language] Found {Count} logo(s) for {ItemName} (TMDB ID: {TmdbId})", 
-                        logoCount, itemName, tmdbId);
-                    
-                    images.AddRange(imageData.Logos.Select(logo => new RemoteImageInfo
-                    {
-                        Url = TmdbImageBaseUrl + logo.FilePath,
-                        Type = ImageType.Logo,
-                        ProviderName = Name,
-                        Language = logo.Iso639_1,
-                        Width = logo.Width,
-                        Height = logo.Height,
-                        CommunityRating = logo.VoteAverage
-                    }));
-                    
-                    var logoLanguages = string.Join(", ", imageData.Logos.Select(l => l.Iso639_1 ?? "null").Distinct());
-                    LogDebugIfEnabled("[TMDB Multi-Language] Logo languages for {ItemName}: {Languages}", itemName, logoLanguages);
-                }
-                else
-                {
-                    LogDebugIfEnabled("[TMDB Multi-Language] No logos found for {ItemName} (TMDB ID: {TmdbId})", itemName, tmdbId);
-                }
-
-                LogDebugIfEnabled("[TMDB Multi-Language] Successfully retrieved {TotalCount} image(s) for {ItemName} (TMDB ID: {TmdbId}) - Posters: {PosterCount}, Backdrops: {BackdropCount}, Logos: {LogoCount}", 
-                    images.Count, itemName, tmdbId, 
-                    imageData?.Posters?.Count ?? 0, 
-                    imageData?.Backdrops?.Count ?? 0, 
-                    imageData?.Logos?.Count ?? 0);
+                LogDebugIfEnabled("[TMDB Multi-Language] Successfully retrieved {TotalCount} image(s) for {ItemName} (TMDB ID: {TmdbId}) - Posters: {PosterCount}/{PosterTotal}, Backdrops: {BackdropCount}/{BackdropTotal}, Logos: {LogoCount}/{LogoTotal}",
+                    images.Count, itemName, tmdbId,
+                    filteredPosters, imageData?.Posters?.Count ?? 0,
+                    filteredBackdrops, imageData?.Backdrops?.Count ?? 0,
+                    filteredLogos, imageData?.Logos?.Count ?? 0);
 
                 return images;
             }
@@ -288,6 +243,119 @@ namespace Jellyfin.Plugin.TmdbMultiLanguage
         {
             var httpClient = _httpClientFactory.CreateClient();
             return httpClient.GetAsync(url, cancellationToken);
+        }
+
+        // null entry in the list represents TMDB's "language-less" images (iso_639_1 = null/"").
+        private static List<string?> ParseLanguagePriority(string? languages)
+        {
+            if (string.IsNullOrWhiteSpace(languages))
+            {
+                return new List<string?>();
+            }
+
+            var result = new List<string?>();
+            foreach (var raw in languages.Split(','))
+            {
+                var trimmed = raw.Trim();
+                if (string.IsNullOrEmpty(trimmed))
+                {
+                    continue;
+                }
+
+                string? entry = string.Equals(trimmed, "null", StringComparison.OrdinalIgnoreCase) ? null : trimmed;
+                if (!result.Any(e => string.Equals(e, entry, StringComparison.OrdinalIgnoreCase)))
+                {
+                    result.Add(entry);
+                }
+            }
+            return result;
+        }
+
+        private static string BuildLanguageQueryParam(params List<string?>[] priorities)
+        {
+            var union = new List<string>();
+            var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            foreach (var list in priorities)
+            {
+                foreach (var lang in list)
+                {
+                    var token = lang ?? "null";
+                    if (seen.Add(token))
+                    {
+                        union.Add(token);
+                    }
+                }
+            }
+            return union.Count == 0 ? "null" : string.Join(",", union);
+        }
+
+        private static string FormatPriority(List<string?> priority)
+        {
+            return string.Join(",", priority.Select(l => l ?? "null"));
+        }
+
+        private static int GetLanguagePriorityIndex(string? imageLanguage, List<string?> priority)
+        {
+            for (var i = 0; i < priority.Count; i++)
+            {
+                var p = priority[i];
+                if (p is null)
+                {
+                    if (string.IsNullOrEmpty(imageLanguage))
+                    {
+                        return i;
+                    }
+                }
+                else if (string.Equals(p, imageLanguage, StringComparison.OrdinalIgnoreCase))
+                {
+                    return i;
+                }
+            }
+            return -1;
+        }
+
+        private int AddFilteredImages(
+            List<RemoteImageInfo> target,
+            List<TmdbImage>? source,
+            ImageType imageType,
+            List<string?> priority,
+            string typeLabel,
+            string itemName,
+            string tmdbId)
+        {
+            if (source == null)
+            {
+                LogDebugIfEnabled("[TMDB Multi-Language] No {Type}s found for {ItemName} (TMDB ID: {TmdbId})", typeLabel, itemName, tmdbId);
+                return 0;
+            }
+
+            LogDebugIfEnabled("[TMDB Multi-Language] Found {Count} {Type}(s) for {ItemName} (TMDB ID: {TmdbId}) before filtering",
+                source.Count, typeLabel, itemName, tmdbId);
+
+            var ordered = source
+                .Select(img => new { Image = img, Index = GetLanguagePriorityIndex(img.Iso639_1, priority) })
+                .Where(x => x.Index >= 0)
+                .OrderBy(x => x.Index)
+                .ThenByDescending(x => x.Image.VoteAverage)
+                .Select(x => x.Image)
+                .ToList();
+
+            target.AddRange(ordered.Select(img => new RemoteImageInfo
+            {
+                Url = TmdbImageBaseUrl + img.FilePath,
+                Type = imageType,
+                ProviderName = Name,
+                Language = img.Iso639_1,
+                Width = img.Width,
+                Height = img.Height,
+                CommunityRating = img.VoteAverage
+            }));
+
+            var availableLanguages = string.Join(", ", source.Select(i => i.Iso639_1 ?? "null").Distinct());
+            LogDebugIfEnabled("[TMDB Multi-Language] {Type} languages available for {ItemName}: {Languages} — kept {Kept} matching priority [{Priority}]",
+                typeLabel, itemName, availableLanguages, ordered.Count, FormatPriority(priority));
+
+            return ordered.Count;
         }
     }
 

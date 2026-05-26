@@ -18,10 +18,33 @@
                     <div class="fieldDescription">Your personal API key from TheMovieDB. Required for metadata and image fetching.</div>
                 </div>
 
+                <div class="verticalSection">
+                    <div class="sectionTitleContainer">
+                        <h3 class="sectionTitle">Language Priority Per Image Type</h3>
+                        <p class="sectionDescription">
+                            Set the preferred language order separately for each image type. Comma separated, highest priority first.
+                            Example: <strong>de,en,null</strong>. Use <strong>null</strong> for images without a language tag.
+                            Images in languages not listed will be excluded.
+                        </p>
+                    </div>
+                </div>
+
                 <div class="inputContainer">
-                    <label class="inputLabel inputLabelUnfocused" for="txtPreferredLanguages">Preferred Languages (Comma Separated)</label>
-                    <input type="text" id="txtPreferredLanguages" name="txtPreferredLanguages" is="emby-input" defaultValue="en,de,null" />
-                    <div class="fieldDescription">Example: **en,de,null**. The API will search for images in this order. Using **null** instructs the API to search for images without language tags.</div>
+                    <label class="inputLabel inputLabelUnfocused" for="txtPrimaryLanguages">Primary (Poster) Languages</label>
+                    <input type="text" id="txtPrimaryLanguages" name="txtPrimaryLanguages" is="emby-input" />
+                    <div class="fieldDescription">Language priority for poster / primary images.</div>
+                </div>
+
+                <div class="inputContainer">
+                    <label class="inputLabel inputLabelUnfocused" for="txtBackdropLanguages">Backdrop Languages</label>
+                    <input type="text" id="txtBackdropLanguages" name="txtBackdropLanguages" is="emby-input" />
+                    <div class="fieldDescription">Language priority for backdrop images. Backdrops often have no language — typically include <strong>null</strong>.</div>
+                </div>
+
+                <div class="inputContainer">
+                    <label class="inputLabel inputLabelUnfocused" for="txtLogoLanguages">Logo Languages</label>
+                    <input type="text" id="txtLogoLanguages" name="txtLogoLanguages" is="emby-input" />
+                    <div class="fieldDescription">Language priority for logo images.</div>
                 </div>
 
                 <div class="inputContainer">
@@ -58,25 +81,38 @@
                 Dashboard.showLoadingMsg();
                 ApiClient.getPluginConfiguration(pluginId).then(function (config) {
                     var apiKey = config.TmdbApiKey || config.tmdbApiKey || "";
-                    var languages = config.PreferredLanguages || config.preferredLanguages || "en,de,null";
+                    var legacyLanguages = config.PreferredLanguages || config.preferredLanguages || "de,en,null";
+                    var primaryLanguages = config.PrimaryLanguages || config.primaryLanguages || legacyLanguages;
+                    var backdropLanguages = config.BackdropLanguages || config.backdropLanguages || legacyLanguages;
+                    var logoLanguages = config.LogoLanguages || config.logoLanguages || legacyLanguages;
                     var enableDebugMode = config.EnableDebugMode || config.enableDebugMode || false;
 
                     var apiKeyInput = page.querySelector('#txtTmdbApiKey');
-                    var languagesInput = page.querySelector('#txtPreferredLanguages');
+                    var primaryInput = page.querySelector('#txtPrimaryLanguages');
+                    var backdropInput = page.querySelector('#txtBackdropLanguages');
+                    var logoInput = page.querySelector('#txtLogoLanguages');
                     var debugModeCheckbox = page.querySelector('#chkEnableDebugMode');
-                    
+
                     if (apiKeyInput) {
                         apiKeyInput.value = apiKey;
                     }
-                    
-                    if (languagesInput) {
-                        languagesInput.value = languages;
+
+                    if (primaryInput) {
+                        primaryInput.value = primaryLanguages;
                     }
-                    
+
+                    if (backdropInput) {
+                        backdropInput.value = backdropLanguages;
+                    }
+
+                    if (logoInput) {
+                        logoInput.value = logoLanguages;
+                    }
+
                     if (debugModeCheckbox) {
                         debugModeCheckbox.checked = enableDebugMode;
                     }
-                    
+
                     configLoaded = true;
                     Dashboard.hideLoadingMsg();
                 }).catch(function(error) {
@@ -149,14 +185,20 @@
                         
                         // Read values from form inputs
                         var tmdbApiKey = page.querySelector('#txtTmdbApiKey').value;
-                        var preferredLanguages = page.querySelector('#txtPreferredLanguages').value;
+                        var primaryLanguages = page.querySelector('#txtPrimaryLanguages').value;
+                        var backdropLanguages = page.querySelector('#txtBackdropLanguages').value;
+                        var logoLanguages = page.querySelector('#txtLogoLanguages').value;
                         var enableDebugMode = page.querySelector('#chkEnableDebugMode').checked;
 
                         // Load current config, merge changes, and update
                         ApiClient.getPluginConfiguration(pluginId).then(function (currentConfig) {
                             var config = currentConfig || {};
                             config.TmdbApiKey = tmdbApiKey;
-                            config.PreferredLanguages = preferredLanguages;
+                            config.PrimaryLanguages = primaryLanguages;
+                            config.BackdropLanguages = backdropLanguages;
+                            config.LogoLanguages = logoLanguages;
+                            // Keep PreferredLanguages in sync with Primary as a sane legacy value.
+                            config.PreferredLanguages = primaryLanguages;
                             config.EnableDebugMode = enableDebugMode;
                             
                             ApiClient.updatePluginConfiguration(pluginId, config).then(function (result) {

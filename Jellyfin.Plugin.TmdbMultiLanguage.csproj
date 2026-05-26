@@ -5,9 +5,9 @@
     <AssemblyName>Jellyfin.Plugin.TmdbMultiLanguage</AssemblyName>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <Nullable>enable</Nullable>
-    <Version>1.0.3.2</Version>
-    <AssemblyVersion>1.0.3.2</AssemblyVersion>
-    <FileVersion>1.0.3.2</FileVersion>
+    <Version>1.0.4.0</Version>
+    <AssemblyVersion>1.0.4.0</AssemblyVersion>
+    <FileVersion>1.0.4.0</FileVersion>
   </PropertyGroup>
 
   <ItemGroup>

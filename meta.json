@@ -5,9 +5,9 @@
   "overview": "Allows you to specify preferred languages for TMDB images",
   "owner": "Iceshadow",
   "category": "Metadata",
-  "version": "1.0.3.2",
+  "version": "1.0.4.0",
   "targetAbi": "10.9.0.0",
   "framework": "net8.0",
-  "changelog": "Fixed plugin version in jellyfin.",
+  "changelog": "Added per-image-type language priority (Primary / Backdrop / Logo).",
   "imageUrl": ""
 }
