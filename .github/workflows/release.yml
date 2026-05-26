@@ -19,6 +19,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
+          token: ${{ secrets.PAT_TOKEN }}
 
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
@@ -84,10 +85,10 @@ jobs:
           name: Release v${{ steps.get_version.outputs.VERSION }}
           body: |
             Automated release from commit ${{ github.sha }}
-            
+
             **Changes in this release:**
             ${{ github.event.head_commit.message }}
-            
+
             **Checksum:** ${{ steps.checksum.outputs.CHECKSUM }}
           draft: false
           prerelease: false
@@ -96,3 +97,36 @@ jobs:
             ${{ steps.prepare.outputs.ZIP_NAME_WITH_SHA }}
           token: ${{ secrets.PAT_TOKEN }}
           make_latest: true
+
+      - name: Update manifest.json
+        run: |
+          VERSION="${{ steps.get_version.outputs.VERSION }}"
+          CHECKSUM="${{ steps.checksum.outputs.CHECKSUM }}"
+          ZIP_NAME="${{ steps.prepare.outputs.ZIP_NAME }}"
+          CHANGELOG=$(jq -r .changelog meta.json)
+          TARGET_ABI=$(jq -r .targetAbi meta.json)
+          SOURCE_URL="https://github.com/${{ github.repository }}/releases/download/v${VERSION}/${ZIP_NAME}"
+
+          NEW_ENTRY=$(jq -n \
+            --arg version "$VERSION" \
+            --arg changelog "$CHANGELOG" \
+            --arg targetAbi "$TARGET_ABI" \
+            --arg sourceUrl "$SOURCE_URL" \
+            --arg checksum "$CHECKSUM" \
+            '{version:$version, changelog:$changelog, targetAbi:$targetAbi, sourceUrl:$sourceUrl, checksum:$checksum}')
+
+          jq --argjson v "$NEW_ENTRY" '
+            def vkey: (.version | split(".") | map(tonumber? // 0));
+            .[0].versions = ((.[0].versions + [$v]) | unique_by(.version) | sort_by(vkey) | reverse)
+          ' manifest.json > manifest.json.tmp
+          mv manifest.json.tmp manifest.json
+
+      - name: Commit and push manifest
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add manifest.json
+          git diff --staged --quiet && exit 0
+          git commit -m "Update manifest for v${{ steps.get_version.outputs.VERSION }}"
+          git pull --rebase origin master
+          git push
