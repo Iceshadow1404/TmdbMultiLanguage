@@ -4,6 +4,13 @@
     "guid": "96afa51e-678e-42ac-b9f6-f3679173a23f",
     "versions": [
       {
+        "version": "1.0.5.0",
+        "changelog": "Added option to ignore images without TMDB user rating (vote_average = 0).",
+        "targetAbi": "10.9.0.0",
+        "sourceUrl": "https://github.com/Iceshadow1404/TmdbMultiLanguage/releases/download/v1.0.5.0/Jellyfin.Plugin.TmdbMultiLanguage_v1.0.5.0.zip",
+        "checksum": "41D5B2C467FE81F8B9DF0FB5707F4830"
+      },
+      {
         "version": "1.0.4.0",
         "changelog": "Added per-image-type language priority (Primary / Backdrop / Logo).",
         "targetAbi": "10.9.0.0",
