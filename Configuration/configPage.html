@@ -49,6 +49,14 @@
 
                 <div class="inputContainer">
                     <label class="checkboxContainerLabel">
+                        <input type="checkbox" id="chkIgnoreUnratedEpisodes" name="chkIgnoreUnratedEpisodes" is="emby-checkbox" />
+                        <span>Ignore Unrated Episodes</span>
+                    </label>
+                    <div class="fieldDescription">When enabled, images without any user rating on TMDB (vote_average = 0) are filtered out.</div>
+                </div>
+
+                <div class="inputContainer">
+                    <label class="checkboxContainerLabel">
                         <input type="checkbox" id="chkEnableDebugMode" name="chkEnableDebugMode" is="emby-checkbox" />
                         <span>Enable Debug Mode</span>
                     </label>
@@ -85,12 +93,14 @@
                     var primaryLanguages = config.PrimaryLanguages || config.primaryLanguages || legacyLanguages;
                     var backdropLanguages = config.BackdropLanguages || config.backdropLanguages || legacyLanguages;
                     var logoLanguages = config.LogoLanguages || config.logoLanguages || legacyLanguages;
+                    var ignoreUnratedEpisodes = config.IgnoreUnratedEpisodes || config.ignoreUnratedEpisodes || false;
                     var enableDebugMode = config.EnableDebugMode || config.enableDebugMode || false;
 
                     var apiKeyInput = page.querySelector('#txtTmdbApiKey');
                     var primaryInput = page.querySelector('#txtPrimaryLanguages');
                     var backdropInput = page.querySelector('#txtBackdropLanguages');
                     var logoInput = page.querySelector('#txtLogoLanguages');
+                    var ignoreUnratedCheckbox = page.querySelector('#chkIgnoreUnratedEpisodes');
                     var debugModeCheckbox = page.querySelector('#chkEnableDebugMode');
 
                     if (apiKeyInput) {
@@ -107,6 +117,10 @@
 
                     if (logoInput) {
                         logoInput.value = logoLanguages;
+                    }
+
+                    if (ignoreUnratedCheckbox) {
+                        ignoreUnratedCheckbox.checked = ignoreUnratedEpisodes;
                     }
 
                     if (debugModeCheckbox) {
@@ -188,6 +202,7 @@
                         var primaryLanguages = page.querySelector('#txtPrimaryLanguages').value;
                         var backdropLanguages = page.querySelector('#txtBackdropLanguages').value;
                         var logoLanguages = page.querySelector('#txtLogoLanguages').value;
+                        var ignoreUnratedEpisodes = page.querySelector('#chkIgnoreUnratedEpisodes').checked;
                         var enableDebugMode = page.querySelector('#chkEnableDebugMode').checked;
 
                         // Load current config, merge changes, and update
@@ -199,6 +214,7 @@
                             config.LogoLanguages = logoLanguages;
                             // Keep PreferredLanguages in sync with Primary as a sane legacy value.
                             config.PreferredLanguages = primaryLanguages;
+                            config.IgnoreUnratedEpisodes = ignoreUnratedEpisodes;
                             config.EnableDebugMode = enableDebugMode;
                             
                             ApiClient.updatePluginConfiguration(pluginId, config).then(function (result) {

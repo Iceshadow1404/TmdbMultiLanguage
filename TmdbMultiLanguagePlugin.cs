@@ -32,6 +32,7 @@ namespace Jellyfin.Plugin.TmdbMultiLanguage
         public string PrimaryLanguages { get; set; }
         public string BackdropLanguages { get; set; }
         public string LogoLanguages { get; set; }
+        public bool IgnoreUnratedEpisodes { get; set; }
         public bool EnableDebugMode { get; set; }
 
         public PluginConfiguration()
@@ -41,6 +42,7 @@ namespace Jellyfin.Plugin.TmdbMultiLanguage
             PrimaryLanguages = string.Empty;
             BackdropLanguages = string.Empty;
             LogoLanguages = string.Empty;
+            IgnoreUnratedEpisodes = false;
             EnableDebugMode = false;
         }
 
@@ -332,7 +334,10 @@ namespace Jellyfin.Plugin.TmdbMultiLanguage
             LogDebugIfEnabled("[TMDB Multi-Language] Found {Count} {Type}(s) for {ItemName} (TMDB ID: {TmdbId}) before filtering",
                 source.Count, typeLabel, itemName, tmdbId);
 
+            var ignoreUnrated = Plugin.Instance?.Configuration?.IgnoreUnratedEpisodes == true;
+
             var ordered = source
+                .Where(img => !ignoreUnrated || img.VoteAverage > 0)
                 .Select(img => new { Image = img, Index = GetLanguagePriorityIndex(img.Iso639_1, priority) })
                 .Where(x => x.Index >= 0)
                 .OrderBy(x => x.Index)
